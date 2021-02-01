@@ -32,8 +32,8 @@ namespace Suyabot.Modules
             int index = Config.Profiles.FindIndex(x => x.UserID == user.Id);
             if (index == -1)
             {
-                Extensions.Log("Error", $"Couldn't find profile for {Context.User.Username}");
-                await Context.Channel.SendEmbedAsync($"Error", $"Couldn't find profile for {Context.User.GetText()}");
+                Extensions.Log("Error", $"Couldn't find profile for {user.Username}");
+                await Context.Channel.SendEmbedAsync($"Error", $"Couldn't find profile for {user.GetText()}");
                 return;
             }
 
@@ -43,8 +43,8 @@ namespace Suyabot.Modules
                 Color = Color.Purple,
                 Author = new EmbedAuthorBuilder
                 {
-                    IconUrl = Context.User.GetAvatarUrl(),
-                    Name = Context.User.Username
+                    IconUrl = user.GetAvatarUrl(),
+                    Name = user.Username
                 }
             };
             embed.AddField("Level", profile.Level);
