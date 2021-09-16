@@ -6,10 +6,10 @@ namespace Suyabot.Modules
 {
     public class TestModules : ModuleBase<SocketCommandContext>
     {
-        [Command("test")]
-        public async Task Task(SocketUser user)
+        [Command("help")]
+        public async Task Help()
         {
-            await Context.Channel.SendEmbedAsync(user.GetText());
+            await Context.Channel.SendMessageAsync("```\n$play {url} #not complete\n$skip [count]\n$remove {index}\n$queue #not working\n$np #not working\n$disconnect```");
         }
     }
 }

@@ -30,6 +30,12 @@ namespace Suyabot
             _service.Log += HandleLogAsync;
             _client.MessageReceived += HandleCommandAsync;
             _client.UserVoiceStateUpdated += HandleVoiceAsync;
+            _client.MessageDeleted += HandleDeleteAsync;
+        }
+
+        private async Task HandleDeleteAsync(Cacheable<IMessage, ulong> arg1, ISocketMessageChannel arg2)
+        {
+            Extensions.Log("debug", "message deleted");
         }
 
         private async Task HandleLogAsync(LogMessage arg)
@@ -68,7 +74,7 @@ namespace Suyabot
 
                 if (msg.Content.ToLower() == "jo")
                 {
-                    await context.Channel.SendMessageAsync("jo");
+                    await context.Channel.SendMessageAsync("Good morning, motherfuckers☆");
                 }
             }
         }
