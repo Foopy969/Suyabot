@@ -120,7 +120,7 @@ namespace Suyabot.Modules
                 {
                     text += "$__Up Next:__\n"
                     + string.Join("\n", GetSongs.Select((x, i) => $"`{i + 1}.` {x}"))
-                    + $"$**{GetSongs.Count()} songs in queue | {GetSongs.Sum(x => x.Duration) / 60}:{GetSongs.Sum(x => x.Duration) % 60} total length**";
+                    + $"**{GetSongs.Count()} songs in queue | {GetSongs.Sum(x => x.Duration) / 60}:{GetSongs.Sum(x => x.Duration) % 60} total length**";
                 }
             }
 

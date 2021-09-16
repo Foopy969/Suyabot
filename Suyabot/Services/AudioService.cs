@@ -128,7 +128,7 @@ namespace Suyabot.Services
             Title = (string)json["title"];
             Url = (string)json["webpage_url"];
             Artist = (string)json["uploader"];
-            Audio = (string)json["formats"].Where(x => x["format"].ToString().Contains("audio only")).First()["url"]; //lowest quality
+            Audio = (string)json["formats"].Where(x => x["protocol"].ToString().Contains("http") && x["format"].ToString().Contains("audio only")).First()["url"]; //lowest quality
             Thumbnail = (string)json["thumbnail"];
             Duration = (int)json["duration"];
         }
