@@ -29,6 +29,13 @@ namespace Suyabot.Modules
                 await Context.Channel.SendEmbedAsync("Stopped mentioning users");
         }
 
+        [Command("status")]
+        public async Task Status(params string[] status)
+        {
+            await Context.Client.SetGameAsync(string.Join(" ", status));
+            await Context.Channel.SendEmbedAsync("Status set");
+        }
+
         [Group("log")]
         public class Log : ModuleBase<SocketCommandContext>
         {

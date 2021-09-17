@@ -31,6 +31,7 @@ namespace Suyabot
             _client.MessageReceived += HandleCommandAsync;
             _client.UserVoiceStateUpdated += HandleVoiceAsync;
             _client.MessageDeleted += HandleDeleteAsync;
+            _client.Log += HandleLogAsync;
         }
 
         private async Task HandleDeleteAsync(Cacheable<IMessage, ulong> arg1, ISocketMessageChannel arg2)

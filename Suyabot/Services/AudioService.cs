@@ -13,17 +13,17 @@ namespace Suyabot.Services
 {
     public static class AudioService
     {
-        public static ISocketMessageChannel MessageChannel;
-        public static IVoiceChannel VoiceChannel;
-        public static IAudioClient Client;
-        public static Song Current;
-
-        static DateTime start;
+        static Song current;
         static List<Song> songs = new List<Song>();
-        static Stream stream;
 
-        public static bool IsStreaming => stream != null;
-        public static List<Song> GetSongs => songs;
+        static ISocketMessageChannel channel;
+        static IAudioClient client;
+        static AudioOutStream stream;
+        static Stream song;
+
+        public static bool IsBound => channel != null;
+        public static bool IsPlaying => current != null;
+        public static List<Song> GetSongs => songs.Prepend(current).ToList();
 
         static Process CreateProcess(string fileName, string arguments) => Process.Start(new ProcessStartInfo(fileName, arguments) { UseShellExecute = false, RedirectStandardOutput = true });
 
@@ -37,7 +37,7 @@ namespace Suyabot.Services
 
                     if ((int)obj["duration"] < 601)
                     {
-                        songs.Add(new Song(obj)); //lowest quality
+                        songs.Add(new Song(obj));
                     }
                     else throw new FileLoadException("Song longer than 10 mins");
                 }
@@ -74,43 +74,59 @@ namespace Suyabot.Services
 
         public static bool Skip(int count, out string errormsg)
         {
-            if (stream == null)
+            try
             {
-                errormsg = "Nothing is playing";
+                current = null;
+                song.Close();
+                song.Dispose();
+            }
+            catch (Exception e)
+            {
+                errormsg = e.Message;
                 return false;
             }
-            else
+            finally
             {
-                if (count > 0 && songs.Count() >= count)
-                {
-                    songs.RemoveRange(0, count);
-                }
-
                 errormsg = "Success";
-                stream.Close();
-                return true;
             }
+
+            return true;
         }
 
-        public static async Task PlayAsync(IAudioClient client, ISocketMessageChannel channel)
+        public static void Initialize(IAudioClient client, ISocketMessageChannel channel)
         {
-            using (var discord = client.CreatePCMStream(AudioApplication.Mixed))
+            AudioService.client = client;
+            AudioService.channel = channel;
+
+            stream = client.CreatePCMStream(AudioApplication.Mixed);
+        }
+
+        public static void Dispose()
+        {
+            current = null;
+            channel = null;
+            stream.Close();
+            stream.Dispose();
+            client.StopAsync();
+        }
+
+        public static async Task PlayAsync()
+        {
+            while (songs.Any())
             {
-                while (songs.Any())
+                await channel.SendMessageAsync($"**Playing** :notes: `{songs[0].Title}` - Now!");
+
+                using (song = CreateProcess("ffmpeg.exe", $"-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -err_detect ignore_err -hide_banner -loglevel error -i \"{songs[0].Audio}\" -ac 2 -f s16le -ar 48000 pipe:1").StandardOutput.BaseStream)
                 {
-                    await channel.SendMessageAsync($"**Playing** :notes: `{songs[0].Title}` - Now!");
+                    current = songs[0];
+                    songs.RemoveAt(0);
 
-                    using (stream = CreateProcess("ffmpeg.exe", $"-hide_banner -loglevel error -i \"{songs[0].Audio}\" -ac 2 -f s16le -ar 48000 pipe:1").StandardOutput.BaseStream)
-                    {
-                        start = DateTime.Now;
-                        Current = songs[0];
-                        songs.RemoveAt(0);
-
-                        try { await stream.CopyToAsync(discord); }
-                        finally { await discord.FlushAsync(); }
-                    }
+                    try { await song.CopyToAsync(stream); }
+                    finally { await stream.FlushAsync(); }
                 }
             }
+
+            current = null;
         }
     }
 
@@ -128,15 +144,19 @@ namespace Suyabot.Services
             Title = (string)json["title"];
             Url = (string)json["webpage_url"];
             Artist = (string)json["uploader"];
-            Audio = (string)json["formats"].Where(x => x["protocol"].ToString().Contains("http") && x["format"].ToString().Contains("audio only")).First()["url"]; //lowest quality
+            Audio = (string)json["formats"].Where(x => x["protocol"].ToString().Contains("http") && x["format"].ToString().Contains("audio only")).Last()["url"];
             Thumbnail = (string)json["thumbnail"];
             Duration = (int)json["duration"];
         }
 
-        public override string ToString()
+        public int TimeLeft(DateTime start)
         {
-            return $"[{Title}]({Url}) | `{Duration / 60}:{Duration % 60}`";
+            return Duration - Convert.ToInt32((DateTime.Now - start).TotalSeconds);
         }
 
+        public override string ToString()
+        {
+            return $"[{Title}]({Url}) | `{Duration / 60}:{Duration % 60}`\n";
+        }
     }
 }
