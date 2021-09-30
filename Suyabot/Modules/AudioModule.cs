@@ -27,6 +27,7 @@ namespace Suyabot.Modules
 
             try
             {
+                AudioService.Dispose();
                 Initialize(await vc.ConnectAsync(), Context.Channel);
             }
             catch (Exception e)
