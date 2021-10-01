@@ -4,3 +4,4 @@ a discord bot for my sever
 -run python code  
 -leveling  
 -betting  
+-play music (wip)
